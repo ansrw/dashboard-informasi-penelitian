@@ -51,7 +51,6 @@ const inputLoginPassword = document.getElementById('inputLoginPassword');
 const loginErrorAlert = document.getElementById('loginErrorAlert');
 const btnCloseModalLogin = document.getElementById('btnCloseModalLogin');
 const btnBatalLogin = document.getElementById('btnBatalLogin');
-const btnAutoFillLogin = document.getElementById('btnAutoFillLogin');
 
 // Modals & Toast
 const modalForm = document.getElementById('modalForm');
@@ -434,22 +433,18 @@ function handleAdminLogout(e) {
 
 // --- Event Listeners Setup ---
 function setupEventListeners() {
-  btnPublicView.addEventListener('click', () => setViewMode('public'));
-  btnAdminView.addEventListener('click', () => setViewMode('admin'));
-  btnAdminLogout.addEventListener('click', handleAdminLogout);
-  btnThemeToggle.addEventListener('click', toggleTheme);
+  btnPublicView?.addEventListener('click', () => setViewMode('public'));
+  btnAdminView?.addEventListener('click', () => setViewMode('admin'));
+  btnAdminLogout?.addEventListener('click', handleAdminLogout);
+  btnThemeToggle?.addEventListener('click', toggleTheme);
 
   // Login Modal Events
-  btnCloseModalLogin.addEventListener('click', closeLoginModal);
-  btnBatalLogin.addEventListener('click', closeLoginModal);
-  formLoginAdmin.addEventListener('submit', handleAdminLogin);
-  btnAutoFillLogin.addEventListener('click', () => {
-    inputLoginUsername.value = 'admin';
-    inputLoginPassword.value = 'admin123';
-  });
+  btnCloseModalLogin?.addEventListener('click', closeLoginModal);
+  btnBatalLogin?.addEventListener('click', closeLoginModal);
+  formLoginAdmin?.addEventListener('submit', handleAdminLogin);
 
   // Reset Data Sample
-  btnResetData.addEventListener('click', () => {
+  btnResetData?.addEventListener('click', () => {
     if (confirm('Apakah Anda ingin mengembalikan data ke sampel default UPT? Data yang dibuat/diedit akan direset.')) {
       researchData = [...INITIAL_RESEARCH_DATA];
       saveDataToStorage();
@@ -459,13 +454,13 @@ function setupEventListeners() {
   });
 
   // Search Input
-  inputSearch.addEventListener('input', (e) => {
+  inputSearch?.addEventListener('input', (e) => {
     searchQuery = e.target.value;
     renderTable();
   });
 
   // Filter Tabs
-  filterTabs.addEventListener('click', (e) => {
+  filterTabs?.addEventListener('click', (e) => {
     if (e.target.classList.contains('tab-btn')) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
@@ -474,29 +469,28 @@ function setupEventListeners() {
     }
   });
 
-
   // Open Form Modal (Add)
-  btnTambahData.addEventListener('click', () => openFormModal());
+  btnTambahData?.addEventListener('click', () => openFormModal());
 
   // Close Form Modal
-  btnCloseModalForm.addEventListener('click', closeFormModal);
-  btnBatalForm.addEventListener('click', closeFormModal);
+  btnCloseModalForm?.addEventListener('click', closeFormModal);
+  btnBatalForm?.addEventListener('click', closeFormModal);
 
   // Form Submit (Create / Update)
-  formPenelitian.addEventListener('submit', handleFormSubmit);
+  formPenelitian?.addEventListener('submit', handleFormSubmit);
 
   // Table Delegates (View Doc, Edit, Delete)
-  tableBody.addEventListener('click', handleTableActions);
+  tableBody?.addEventListener('click', handleTableActions);
 
   // Doc Viewer Modal Events
-  btnCloseDocViewer.addEventListener('click', closeDocViewer);
-  btnCloseDocViewerFooter.addEventListener('click', closeDocViewer);
-  btnDownloadDoc.addEventListener('click', handleDocDownload);
+  btnCloseDocViewer?.addEventListener('click', closeDocViewer);
+  btnCloseDocViewerFooter?.addEventListener('click', closeDocViewer);
+  btnDownloadDoc?.addEventListener('click', handleDocDownload);
 
   // Delete Modal Events
-  btnCloseModalDelete.addEventListener('click', closeDeleteModal);
-  btnBatalDelete.addEventListener('click', closeDeleteModal);
-  btnConfirmDelete.addEventListener('click', handleConfirmDelete);
+  btnCloseModalDelete?.addEventListener('click', closeDeleteModal);
+  btnBatalDelete?.addEventListener('click', closeDeleteModal);
+  btnConfirmDelete?.addEventListener('click', handleConfirmDelete);
 }
 
 // --- Table Action Delegations ---
