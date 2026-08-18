@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistem Informasi Penelitian Mahasiswa UPT - Catalog & Admin Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230284c7'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>" />
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navbar Header -->
+    <nav class="navbar">
+      <div class="brand-section">
+        <div class="brand-title">
+          <h1 id="navAppTitle">Informasi Daftar Penelitian BKSDA Kaltim</h1>
+          <p id="navSubtitle">Balai Konservasi Sumber Daya Alam Kalimantan Timur</p>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Switch View: Public vs Admin -->
+        <div class="mode-switcher" id="modeSwitcher">
+          <button type="button" class="mode-btn active" id="btnPublicView">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Tampilan Publik
+          </button>
+          <button type="button" class="mode-btn" id="btnAdminView">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Dashboard Admin
+          </button>
+        </div>
+
+        <button type="button" class="btn-secondary" id="btnAdminLogout" style="display: none; background: var(--danger-bg); color: var(--danger); border-color: rgba(220, 38, 38, 0.3); cursor: pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout Admin
+        </button>
+
+        <button type="button" class="theme-toggle-btn" id="btnThemeToggle" title="Toggle Dark/Light Mode">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="iconTheme"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <button type="button" class="reset-btn" id="btnResetData" title="Reset Data Sample">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Hero / Welcome Banner & Stats -->
+    <header class="hero-section">
+      <div class="welcome-card">
+        <span class="badge-tag" id="modeBadge">
+          Layanan Informasi Penelitian BKSDA Kaltim
+        </span>
+        <h2 id="welcomeTitle">Daftar Penelitian</h2>
+        <p id="welcomeDesc">
+          Daftar mahasiswa/i yang melaksanakan kegiatan penelitian, magang, praktik kerja lapangan di lingkup Balai Konservasi Sumber Daya Alam Kalimantan Timur. Informasi mencakup data penelitian dan dapat digunakan sebagai media informasi terkait kegiatan penelitian mahasiswa/i.
+        </p>
+      </div>
+
+      <!-- Quick KPI Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon total">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="stat-info">
+            <h3 id="statTotal">0</h3>
+            <span>Total Penelitian</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon done">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="stat-info">
+            <h3 id="statProposal">0</h3>
+            <span>Proposal Selesai</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon done" style="background: var(--emerald-bg); color: var(--emerald);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          </div>
+          <div class="stat-info">
+            <h3 id="statHasil">0</h3>
+            <span>Hasil Selesai</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon docs">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div class="stat-info">
+            <h3 id="statDocs">0</h3>
+            <span>Laporan Hasil</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Controls (Search, Filter Tabs, Add Button, Export) -->
+    <section class="control-panel">
+      <!-- Live Search -->
+      <div class="search-box">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="inputSearch" placeholder="Cari nama mahasiswa, judul penelitian, atau instansi..." />
+      </div>
+
+      <!-- Status Filter Tabs -->
+      <div class="filter-group">
+        <div class="filter-tabs" id="filterTabs">
+          <button type="button" class="tab-btn active" data-filter="all">Semua Data</button>
+          <button type="button" class="tab-btn" data-filter="prop-selesai">Proposal Selesai</button>
+          <button type="button" class="tab-btn" data-filter="hasil-selesai">Hasil Selesai</button>
+          <button type="button" class="tab-btn" data-filter="belum">Belum Presentasi</button>
+        </div>
+
+        <!-- Admin Only Action Button -->
+        <button type="button" class="btn-primary" id="btnTambahData" style="display: none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tambah Penelitian
+        </button>
+      </div>
+    </section>
+
+    <!-- Main Data Table Container -->
+    <main class="table-wrapper">
+      <table class="custom-table" id="researchTable">
+        <thead>
+          <tr>
+            <th class="col-num">No</th>
+            <th>Mahasiswa & Instansi</th>
+            <th>Nama / Judul Penelitian</th>
+            <th>Dokumen Proposal</th>
+            <th>Dokumen Hasil</th>
+            <th>Status Proposal</th>
+            <th>Status Hasil</th>
+            <th id="thActions" style="display: none; text-align: center;">Aksi Admin</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Rows injected via app.js -->
+        </tbody>
+      </table>
+
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <h3>Tidak ada data penelitian yang cocok</h3>
+        <p>Coba ubah kata kunci pencarian atau pilih filter status lainnya.</p>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2026 UPT Layanan Laboratorium & Penelitian Terpadu. Dashboard Manajemen Presentasi Mahasiswa.</p>
+    </footer>
+  </div>
+
+  <!-- Admin Modal Form (Create / Edit) -->
+  <div class="modal-overlay" id="modalForm">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modalFormTitle">Tambah Data Penelitian Mahasiswa</h3>
+        <button type="button" class="close-modal-btn" id="btnCloseModalForm">&times;</button>
+      </div>
+      <form id="formPenelitian">
+        <div class="modal-body">
+          <input type="hidden" id="editRecordId" value="" />
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label for="inputNama">Nama Mahasiswa (Boleh dikosongkan)</label>
+              <input type="text" id="inputNama" placeholder="Contoh: Budi Santoso" />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="inputUniversitas">Asal Perguruan Tinggi / Instansi *</label>
+              <input type="text" id="inputUniversitas" placeholder="Contoh: Universitas Indonesia" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="inputJudul">Judul Penelitian *</label>
+              <textarea id="inputJudul" rows="3" placeholder="Tuliskan judul lengkap penelitian mahasiswa..." required></textarea>
+            </div>
+
+            <div class="form-group full-width">
+              <label for="inputBidang">Tempat / Bidang Penelitian *</label>
+              <input type="text" id="inputBidang" placeholder="Contoh: Seksi KSDA Wilayah II Tenggarong" required />
+            </div>
+
+            <div class="form-group">
+              <label for="inputTglProposal">Jadwal Presentasi Proposal</label>
+              <input type="date" id="inputTglProposal" />
+            </div>
+
+            <div class="form-group">
+              <label for="selectStatusProposal">Status Presentasi Proposal *</label>
+              <select id="selectStatusProposal" required>
+                <option value="Belum">Belum Presentasi</option>
+                <option value="Selesai">Selesai Presentasi</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="inputTglHasil">Jadwal Presentasi Hasil Akhir</label>
+              <input type="date" id="inputTglHasil" />
+            </div>
+
+            <div class="form-group">
+              <label for="selectStatusHasil">Status Presentasi Hasil *</label>
+              <select id="selectStatusHasil" required>
+                <option value="Belum">Belum Presentasi</option>
+                <option value="Selesai">Selesai Presentasi</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <label for="inputProposalFile">Link Google Drive / URL Proposal Penelitian (.pdf)</label>
+              <input type="url" id="inputProposalFile" placeholder="Contoh: https://drive.google.com/file/d/1Bxd_.../view" />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="inputHasilFile">Link Google Drive / URL Hasil Penelitian (.pdf)</label>
+              <input type="url" id="inputHasilFile" placeholder="Contoh: https://drive.google.com/file/d/1Bxd_.../view" />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="inputCatatan">Catatan / Keterangan UPT</label>
+              <textarea id="inputCatatan" rows="2" placeholder="Catatan tambahan hasil pengujian atau sidang..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btnBatalForm">Batal</button>
+          <button type="submit" class="btn-primary" id="btnSimpanData">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Document PDF Viewer Modal -->
+  <div class="modal-overlay" id="modalDocViewer">
+    <div class="modal-container" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 id="docViewerTitle">Pratinjau Dokumen</h3>
+        <button type="button" class="close-modal-btn" id="btnCloseDocViewer">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="pdf-viewer-container">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span id="docTypeLabel" style="font-weight: 700; font-size: 0.85rem; color: #38bdf8; text-transform: uppercase;">DOKUMEN PROPOSAL</span>
+            <span id="docMetaLabel" style="font-size: 0.8rem; opacity: 0.8;">Google Drive • PDF Format</span>
+          </div>
+
+          <div class="pdf-mock-page" id="pdfMockContent">
+            <div class="pdf-stamp">VERIFIED UPT DOCUMENT</div>
+            <h2 id="pdfHeaderTitle" style="font-size: 1.4rem; margin-bottom: 12px; font-weight: bold;">[Judul Penelitian]</h2>
+            <p id="pdfHeaderAuthor" style="font-size: 0.9rem; color: #475569; margin-bottom: 20px; font-style: italic;">Disusun Oleh: [Nama Mahasiswa] - [Universitas]</p>
+            <hr style="margin-bottom: 20px; border-color: #cbd5e1;" />
+            <h4 style="font-family: sans-serif; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #0284c7; margin-bottom: 8px;">DOKUMEN PENELITIAN GOOGLE DRIVE</h4>
+            <p id="pdfHeaderAbstract" style="font-size: 0.95rem; line-height: 1.6; color: #334155;">
+              Dokumen proposal / hasil penelitian ini diarsipkan secara aman di Google Drive resmi BKSDA Kaltim.
+            </p>
+            <div id="pdfGdriveLinkBox" style="margin-top: 20px; padding: 14px; background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 8px; font-size: 0.88rem; color: #0369a1; word-break: break-all;">
+              📌 <strong>Link Google Drive:</strong> <a id="pdfGdriveAnchor" href="#" target="_blank" style="color: #0284c7; text-decoration: underline; font-weight: 600;">-</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="btnCloseDocViewerFooter">Tutup</button>
+        <button type="button" class="btn-primary" id="btnDownloadDoc">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Buka Dokumen di Google Drive
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div class="modal-overlay" id="modalDelete">
+    <div class="modal-container" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 style="color: var(--danger);">Konfirmasi Hapus Data</h3>
+        <button type="button" class="close-modal-btn" id="btnCloseModalDelete">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Apakah Anda yakin ingin menghapus data penelitian mahasiswa <strong id="deleteTargetName">...</strong>?</p>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">Tindakan ini tidak dapat dibatalkan.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="btnBatalDelete">Batal</button>
+        <button type="button" class="btn-primary" id="btnConfirmDelete" style="background: var(--danger);">Ya, Hapus Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Login Modal -->
+  <div class="modal-overlay" id="modalLogin">
+    <div class="modal-container" style="max-width: 440px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);">
+        <div>
+          <h3 style="color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Autentikasi Admin UPT
+          </h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Masukkan kredensial pengelola UPT untuk akses Admin.</p>
+        </div>
+        <button type="button" class="close-modal-btn" id="btnCloseModalLogin">&times;</button>
+      </div>
+      <form id="formLoginAdmin">
+        <div class="modal-body">
+          <div id="loginErrorAlert" style="display: none; padding: 10px 14px; background: var(--danger-bg); color: var(--danger); border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; margin-bottom: 16px;">
+            Username atau Password salah!
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label for="inputLoginUsername">Username Administrator *</label>
+            <input type="text" id="inputLoginUsername" placeholder="Masukkan username admin..." required />
+          </div>
+
+          <div class="form-group">
+            <label for="inputLoginPassword">Kata Sandi / Password *</label>
+            <input type="password" id="inputLoginPassword" placeholder="Masukkan password..." required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btnBatalLogin">Batal</button>
+          <button type="submit" class="btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Masuk Admin
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toastNotification">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <span id="toastMessage">Pesan Notifikasi</span>
+  </div>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
