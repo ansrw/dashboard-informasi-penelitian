@@ -1,11 +1,5 @@
 import { INITIAL_RESEARCH_DATA } from './data.js';
-import {
-  loadDataFromCloud,
-  saveDataToCloud,
-  onSyncStatusChange,
-  getCloudConfig,
-  saveCloudConfig
-} from './cloudStorage.js';
+import { loadDataFromCloud, saveDataToCloud } from './cloudStorage.js';
 
 // --- Configuration & Auth Credentials ---
 const ADMIN_USERNAME = 'admin';
@@ -44,11 +38,6 @@ const statDocs = document.getElementById('statDocs');
 const inputSearch = document.getElementById('inputSearch');
 const filterTabs = document.getElementById('filterTabs');
 const btnTambahData = document.getElementById('btnTambahData');
-const adminActionsGroup = document.getElementById('adminActionsGroup');
-const btnExportJson = document.getElementById('btnExportJson');
-const btnImportJson = document.getElementById('btnImportJson');
-const inputImportJson = document.getElementById('inputImportJson');
-const btnCloudSettings = document.getElementById('btnCloudSettings');
 
 const researchTable = document.getElementById('researchTable');
 const tableBody = document.getElementById('tableBody');
@@ -83,47 +72,19 @@ const btnBatalDelete = document.getElementById('btnBatalDelete');
 const btnConfirmDelete = document.getElementById('btnConfirmDelete');
 const deleteTargetName = document.getElementById('deleteTargetName');
 
-const modalCloudConfig = document.getElementById('modalCloudConfig');
-const formCloudConfig = document.getElementById('formCloudConfig');
-const btnCloseModalCloudConfig = document.getElementById('btnCloseModalCloudConfig');
-const btnBatalCloudConfig = document.getElementById('btnBatalCloudConfig');
-const btnResetCloudDefault = document.getElementById('btnResetCloudDefault');
-
 const toastNotification = document.getElementById('toastNotification');
 const toastMessage = document.getElementById('toastMessage');
 
 // --- Initialization ---
 async function initApp() {
   initTheme();
-  setupCloudSyncStatus();
   setupEventListeners();
 
-  // Load from Cloud Database
+  // Load data from Cloud / Local Cache / Default
   researchData = await loadDataFromCloud();
   renderApp();
 }
 
-function setupCloudSyncStatus() {
-  const badge = document.getElementById('cloudSyncBadge');
-  const text = document.getElementById('cloudSyncText');
-
-  onSyncStatusChange((statusState, message) => {
-    if (!badge || !text) return;
-    badge.className = `cloud-status-badge ${statusState}`;
-    if (statusState === 'synced') {
-      text.textContent = '☁️ Tersinkron';
-      badge.title = message || 'Data tersinkronisasi di Cloud Database';
-    } else if (statusState === 'syncing') {
-      text.textContent = '🔄 Sinkronisasi...';
-      badge.title = message || 'Sedang menyinkronkan data dengan Cloud Database...';
-    } else {
-      text.textContent = '⚡ Mode Lokal';
-      badge.title = message || 'Cloud offline, menggunakan data lokal';
-    }
-  });
-}
-
-// --- Cloud & Storage Helpers ---
 async function saveDataToStorage() {
   await saveDataToCloud(researchData);
 }
@@ -183,7 +144,6 @@ function renderStats() {
 
 function getFilteredData() {
   return researchData.filter(item => {
-    // Filter status tab
     if (activeFilterTab === 'prop-selesai' && item.statusProposal !== 'Selesai') {
       return false;
     }
@@ -194,7 +154,6 @@ function getFilteredData() {
       return false;
     }
 
-    // Search query
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
       const matchNama = item.namaMahasiswa.toLowerCase().includes(q);
@@ -223,7 +182,6 @@ function renderTable() {
   filtered.forEach((item, index) => {
     const tr = document.createElement('tr');
     
-    // Status Proposal Badge & Schedule
     const isPropSelesai = item.statusProposal === 'Selesai';
     const tglPropFormatted = formatDate(item.tanggalPresentasiProposal);
     const statusPropBadge = `
@@ -238,7 +196,6 @@ function renderTable() {
       </div>
     `;
 
-    // Status Hasil Badge & Schedule
     const isHasilSelesai = item.statusHasil === 'Selesai';
     const tglHasilFormatted = formatDate(item.tanggalPresentasiHasil);
     const statusHasilBadge = `
@@ -253,7 +210,6 @@ function renderTable() {
       </div>
     `;
 
-    // Proposal Document Button
     const propDocUrl = item.dokumenProposal ? (item.dokumenProposal.url || '#') : null;
     const propDocHtml = item.dokumenProposal ? `
       <a href="${escapeHtml(propDocUrl)}" target="_blank" rel="noopener noreferrer" class="doc-btn proposal" data-action="view-doc" data-id="${item.id}" data-type="proposal" title="Buka Dokumen Proposal di Google Drive">
@@ -262,7 +218,6 @@ function renderTable() {
       </a>
     ` : '<span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">Tidak ada</span>';
 
-    // Result Document Button
     const hasilDocUrl = item.dokumenHasil ? (item.dokumenHasil.url || '#') : null;
     const hasilDocHtml = item.dokumenHasil ? `
       <a href="${escapeHtml(hasilDocUrl)}" target="_blank" rel="noopener noreferrer" class="doc-btn hasil" data-action="view-doc" data-id="${item.id}" data-type="hasil" title="Buka Dokumen Hasil di Google Drive">
@@ -276,7 +231,6 @@ function renderTable() {
       </button>
     `;
 
-    // Admin Actions HTML
     const adminActionsHtml = currentMode === 'admin' ? `
       <td class="actions-cell" style="text-align: center;">
         <div class="action-btn-group" style="justify-content: center;">
@@ -301,30 +255,16 @@ function renderTable() {
         </div>
       </td>
       <td>
-        <div class="research-info">
-          <span class="research-title">${escapeHtml(item.judulPenelitian)}</span>
-          <span class="research-field">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            ${escapeHtml(item.tempatPenelitian || 'Seksi KSDA Wilayah II Tenggarong')}
-          </span>
+        <div class="research-title">${escapeHtml(item.judulPenelitian)}</div>
+        <div class="location-tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          ${escapeHtml(item.tempatPenelitian || 'BKSDA Kaltim')}
         </div>
       </td>
-      <td>
-        <div class="doc-btn-group">
-          ${propDocHtml}
-        </div>
-      </td>
-      <td>
-        <div class="doc-btn-group">
-          ${hasilDocHtml}
-        </div>
-      </td>
-      <td>
-        ${statusPropBadge}
-      </td>
-      <td>
-        ${statusHasilBadge}
-      </td>
+      <td>${propDocHtml}</td>
+      <td>${hasilDocHtml}</td>
+      <td>${statusPropBadge}</td>
+      <td>${statusHasilBadge}</td>
       ${adminActionsHtml}
     `;
 
@@ -332,18 +272,14 @@ function renderTable() {
   });
 }
 
-// --- Helper Functions ---
 function escapeHtml(str) {
   if (!str) return '';
-  return str.replace(/[&<>"']/g, function(m) {
-    return {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
-    }[m];
-  });
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 function formatDate(dateStr) {
@@ -370,7 +306,7 @@ function setViewMode(mode) {
   if (mode === 'admin') {
     btnAdminView.classList.add('active');
     btnPublicView.classList.remove('active');
-    if (adminActionsGroup) adminActionsGroup.style.display = 'flex';
+    btnTambahData.style.display = 'inline-flex';
     btnAdminLogout.style.display = 'inline-flex';
     thActions.style.display = 'table-cell';
     welcomeTitle.textContent = 'Dashboard Admin — Kelola Penelitian BKSDA Kalimantan Timur';
@@ -379,7 +315,7 @@ function setViewMode(mode) {
   } else {
     btnPublicView.classList.add('active');
     btnAdminView.classList.remove('active');
-    if (adminActionsGroup) adminActionsGroup.style.display = 'none';
+    btnTambahData.style.display = 'none';
     btnAdminLogout.style.display = 'none';
     thActions.style.display = 'none';
     welcomeTitle.textContent = 'Daftar Penelitian';
@@ -405,7 +341,6 @@ function handleAdminLogin(e) {
   const username = inputLoginUsername.value.trim();
   const password = inputLoginPassword.value.trim();
 
-  // Valid Credentials Check (Configured in ADMIN_USERNAME & ADMIN_PASSWORD)
   const targetUser = localStorage.getItem('UPT_ADMIN_USER') || ADMIN_USERNAME;
   const targetPass = localStorage.getItem('UPT_ADMIN_PASS') || ADMIN_PASSWORD;
 
@@ -431,89 +366,6 @@ function handleAdminLogout(e) {
   showToast('Anda telah Logout dari Admin. Kembali ke Tampilan Publik.');
 }
 
-// --- JSON Export & Import Logic ---
-function handleExportJson() {
-  const jsonStr = JSON.stringify(researchData, null, 2);
-  const blob = new Blob([jsonStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const timestamp = new Date().toISOString().split('T')[0];
-  a.href = url;
-  a.download = `UPT_Penelitian_BKSDA_Kaltim_${timestamp}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast('File JSON data berhasil di-export & diunduh.');
-}
-
-function handleImportJson(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = async function(evt) {
-    try {
-      const imported = JSON.parse(evt.target.result);
-      if (Array.isArray(imported) && imported.length > 0) {
-        researchData = imported;
-        await saveDataToStorage();
-        renderApp();
-        showToast(`Berhasil meng-import ${imported.length} data penelitian!`);
-      } else {
-        alert('Format file JSON tidak valid (harus berupa array data penelitian).');
-      }
-    } catch (err) {
-      alert('Gagal membaca file JSON: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-}
-
-// --- Cloud Configuration Modal Logic ---
-function openCloudConfigModal() {
-  const config = getCloudConfig();
-  const endpointEl = document.getElementById('inputCloudEndpoint');
-  const apiKeyEl = document.getElementById('inputCloudApiKey');
-  if (endpointEl) endpointEl.value = config.endpointUrl || '';
-  if (apiKeyEl) apiKeyEl.value = config.apiKey || '';
-  modalCloudConfig.classList.add('active');
-}
-
-function closeCloudConfigModal() {
-  modalCloudConfig.classList.remove('active');
-}
-
-async function handleSaveCloudConfig(e) {
-  e.preventDefault();
-  const endpoint = document.getElementById('inputCloudEndpoint').value.trim();
-  const apiKey = document.getElementById('inputCloudApiKey').value.trim();
-
-  saveCloudConfig({
-    endpointUrl: endpoint,
-    apiKey: apiKey,
-    enabled: true
-  });
-  closeCloudConfigModal();
-  showToast('Pengaturan Cloud Database disimpan. Menyinkronkan...');
-  researchData = await loadDataFromCloud();
-  renderApp();
-}
-
-async function handleResetCloudDefault() {
-  saveCloudConfig({
-    endpointUrl: 'https://api.jsonbin.io/v3/b/66c2e9a3e41b4d34e424c88f',
-    apiKey: '$2a$10$8F596oF.Lz02BqD9i6y20uC2bF321c1z7890abcdefghijklm',
-    enabled: true
-  });
-  const endpointEl = document.getElementById('inputCloudEndpoint');
-  const apiKeyEl = document.getElementById('inputCloudApiKey');
-  if (endpointEl) endpointEl.value = 'https://api.jsonbin.io/v3/b/66c2e9a3e41b4d34e424c88f';
-  if (apiKeyEl) apiKeyEl.value = '$2a$10$8F596oF.Lz02BqD9i6y20uC2bF321c1z7890abcdefghijklm';
-  showToast('Konfigurasi dikembalikan ke REST Endpoint bawaan BKSDA.');
-}
-
 // --- Event Listeners Setup ---
 function setupEventListeners() {
   btnPublicView?.addEventListener('click', () => setViewMode('public'));
@@ -525,18 +377,6 @@ function setupEventListeners() {
   btnCloseModalLogin?.addEventListener('click', closeLoginModal);
   btnBatalLogin?.addEventListener('click', closeLoginModal);
   formLoginAdmin?.addEventListener('submit', handleAdminLogin);
-
-  // JSON Export / Import
-  btnExportJson?.addEventListener('click', handleExportJson);
-  btnImportJson?.addEventListener('click', () => inputImportJson?.click());
-  inputImportJson?.addEventListener('change', handleImportJson);
-
-  // Cloud Config Modal
-  btnCloudSettings?.addEventListener('click', openCloudConfigModal);
-  btnCloseModalCloudConfig?.addEventListener('click', closeCloudConfigModal);
-  btnBatalCloudConfig?.addEventListener('click', closeCloudConfigModal);
-  formCloudConfig?.addEventListener('submit', handleSaveCloudConfig);
-  btnResetCloudDefault?.addEventListener('click', handleResetCloudDefault);
 
   // Reset Data Sample
   btnResetData?.addEventListener('click', () => {
@@ -595,19 +435,10 @@ function handleTableActions(e) {
 
   const action = targetBtn.getAttribute('data-action');
   const id = targetBtn.getAttribute('data-id');
+  const docType = targetBtn.getAttribute('data-type');
 
   if (action === 'view-doc') {
-    const docType = targetBtn.getAttribute('data-type');
-    const item = researchData.find(d => d.id === id);
-    if (item) {
-      const doc = docType === 'proposal' ? item.dokumenProposal : item.dokumenHasil;
-      if (doc && doc.url && doc.url !== '#') {
-        showToast(`Membuka dokumen ${docType === 'proposal' ? 'Proposal' : 'Hasil Akhir'} di Google Drive...`);
-      } else {
-        e.preventDefault();
-        showToast('Link Google Drive belum tersedia untuk dokumen ini.');
-      }
-    }
+    openDocViewer(id, docType);
   } else if (action === 'edit-item') {
     openFormModal(id);
   } else if (action === 'delete-item') {
@@ -615,29 +446,32 @@ function handleTableActions(e) {
   }
 }
 
-// --- Modal Form (Create / Edit) ---
+// --- Add / Edit Modal ---
 function openFormModal(id = null) {
   formPenelitian.reset();
+  editRecordId.value = '';
+
   if (id) {
-    const item = researchData.find(d => d.id === id);
-    if (!item) return;
     modalFormTitle.textContent = 'Edit Data Penelitian Mahasiswa';
-    editRecordId.value = item.id;
-    document.getElementById('inputNama').value = item.namaMahasiswa || '';
-    document.getElementById('inputUniversitas').value = item.universitas || '';
-    document.getElementById('inputJudul').value = item.judulPenelitian || '';
-    document.getElementById('inputBidang').value = item.tempatPenelitian || '';
-    document.getElementById('inputTglProposal').value = item.tanggalPresentasiProposal || item.tanggalPresentasi || '';
-    document.getElementById('inputTglHasil').value = item.tanggalPresentasiHasil || '';
-    document.getElementById('selectStatusProposal').value = item.statusProposal || 'Belum';
-    document.getElementById('selectStatusHasil').value = item.statusHasil || 'Belum';
-    document.getElementById('inputProposalFile').value = item.dokumenProposal ? (item.dokumenProposal.url || item.dokumenProposal.namaFile) : '';
-    document.getElementById('inputHasilFile').value = item.dokumenHasil ? (item.dokumenHasil.url || item.dokumenHasil.namaFile) : '';
-    document.getElementById('inputCatatan').value = item.catatan || '';
+    const item = researchData.find(d => d.id === id);
+    if (item) {
+      editRecordId.value = item.id;
+      document.getElementById('inputNama').value = item.namaMahasiswa || '';
+      document.getElementById('inputUniversitas').value = item.universitas || '';
+      document.getElementById('inputJudul').value = item.judulPenelitian || '';
+      document.getElementById('inputBidang').value = item.tempatPenelitian || '';
+      document.getElementById('inputTglProposal').value = item.tanggalPresentasiProposal || '';
+      document.getElementById('inputTglHasil').value = item.tanggalPresentasiHasil || '';
+      document.getElementById('selectStatusProposal').value = item.statusProposal || 'Belum';
+      document.getElementById('selectStatusHasil').value = item.statusHasil || 'Belum';
+      document.getElementById('inputProposalFile').value = item.dokumenProposal ? (item.dokumenProposal.url || item.dokumenProposal.namaFile || '') : '';
+      document.getElementById('inputHasilFile').value = item.dokumenHasil ? (item.dokumenHasil.url || item.dokumenHasil.namaFile || '') : '';
+      document.getElementById('inputCatatan').value = item.catatan || '';
+    }
   } else {
-    modalFormTitle.textContent = 'Tambah Data Penelitian Mahasiswa';
-    editRecordId.value = '';
+    modalFormTitle.textContent = 'Tambah Penelitian Mahasiswa Baru';
   }
+
   modalForm.classList.add('active');
 }
 
@@ -661,7 +495,6 @@ function handleFormSubmit(e) {
   const hasilFileName = document.getElementById('inputHasilFile').value.trim();
   const catatan = document.getElementById('inputCatatan').value.trim();
 
-  // Create doc objects if file names / URLs supplied
   const propDocObj = proposalFileName ? {
     namaFile: proposalFileName.includes('/') ? 'Proposal_GoogleDrive.pdf' : (proposalFileName.endsWith('.pdf') ? proposalFileName : `${proposalFileName}.pdf`),
     url: proposalFileName.startsWith('http') ? proposalFileName : `https://${proposalFileName}`,
@@ -679,7 +512,6 @@ function handleFormSubmit(e) {
   } : null;
 
   if (id) {
-    // Edit existing
     const index = researchData.findIndex(d => d.id === id);
     if (index !== -1) {
       researchData[index] = {
@@ -699,7 +531,6 @@ function handleFormSubmit(e) {
       showToast(`Data penelitian berhasil diperbarui.`);
     }
   } else {
-    // Add new record
     const newId = `UPT-2026-${String(researchData.length + 1).padStart(3, '0')}`;
     const newRecord = {
       id: newId,
@@ -803,7 +634,6 @@ function handleDocDownload() {
     showToast(`Link Google Drive belum tersedia.`);
   }
 }
-
 
 // Start application when DOM loaded
 document.addEventListener('DOMContentLoaded', initApp);
