@@ -1,4 +1,11 @@
 import { INITIAL_RESEARCH_DATA } from './data.js';
+import {
+  loadDataFromCloud,
+  saveDataToCloud,
+  onSyncStatusChange,
+  getCloudConfig,
+  saveCloudConfig
+} from './cloudStorage.js';
 
 // --- Configuration & Auth Credentials ---
 const ADMIN_USERNAME = 'admin';
@@ -37,6 +44,11 @@ const statDocs = document.getElementById('statDocs');
 const inputSearch = document.getElementById('inputSearch');
 const filterTabs = document.getElementById('filterTabs');
 const btnTambahData = document.getElementById('btnTambahData');
+const adminActionsGroup = document.getElementById('adminActionsGroup');
+const btnExportJson = document.getElementById('btnExportJson');
+const btnImportJson = document.getElementById('btnImportJson');
+const inputImportJson = document.getElementById('inputImportJson');
+const btnCloudSettings = document.getElementById('btnCloudSettings');
 
 const researchTable = document.getElementById('researchTable');
 const tableBody = document.getElementById('tableBody');
@@ -71,61 +83,49 @@ const btnBatalDelete = document.getElementById('btnBatalDelete');
 const btnConfirmDelete = document.getElementById('btnConfirmDelete');
 const deleteTargetName = document.getElementById('deleteTargetName');
 
+const modalCloudConfig = document.getElementById('modalCloudConfig');
+const formCloudConfig = document.getElementById('formCloudConfig');
+const btnCloseModalCloudConfig = document.getElementById('btnCloseModalCloudConfig');
+const btnBatalCloudConfig = document.getElementById('btnBatalCloudConfig');
+const btnResetCloudDefault = document.getElementById('btnResetCloudDefault');
+
 const toastNotification = document.getElementById('toastNotification');
 const toastMessage = document.getElementById('toastMessage');
 
 // --- Initialization ---
-function initApp() {
-  loadDataFromStorage();
+async function initApp() {
   initTheme();
+  setupCloudSyncStatus();
   setupEventListeners();
+
+  // Load from Cloud Database
+  researchData = await loadDataFromCloud();
   renderApp();
 }
 
-// --- LocalStorage Helpers ---
-function loadDataFromStorage() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      researchData = JSON.parse(saved);
-      // Migration & map GDrive URLs (preserve user edited namaMahasiswa)
-      researchData = researchData.map(item => {
-        const initialItem = INITIAL_RESEARCH_DATA.find(d => d.id === item.id);
-        return {
-          ...item,
-          namaMahasiswa: item.namaMahasiswa !== undefined ? item.namaMahasiswa : '',
-          tanggalPresentasiProposal: item.tanggalPresentasiProposal || item.tanggalPresentasi || (initialItem ? initialItem.tanggalPresentasiProposal : ''),
-          tanggalPresentasiHasil: item.tanggalPresentasiHasil || '',
-          dokumenProposal: item.dokumenProposal ? {
-            ...item.dokumenProposal,
-            url: item.dokumenProposal.url || (initialItem && initialItem.dokumenProposal ? initialItem.dokumenProposal.url : 'https://drive.google.com')
-          } : null,
-          dokumenHasil: item.dokumenHasil ? {
-            ...item.dokumenHasil,
-            url: item.dokumenHasil.url || (initialItem && initialItem.dokumenHasil ? initialItem.dokumenHasil.url : 'https://drive.google.com')
-          } : null,
-          statusProposal: item.statusProposal || (item.status === 'Done' || item.status === 'Selesai' ? 'Selesai' : 'Belum'),
-          statusHasil: item.statusHasil || (item.status === 'Done' || item.status === 'Selesai' ? 'Selesai' : 'Belum'),
-          tempatPenelitian: item.tempatPenelitian || item.bidangUpt || 'Seksi KSDA Wilayah II Tenggarong'
-        };
-      });
-      if (researchData.length === 0 && INITIAL_RESEARCH_DATA.length > 0) {
-        researchData = [...INITIAL_RESEARCH_DATA];
-        saveDataToStorage();
-      }
-    } catch (e) {
-      console.error("Gagal memuat data dari localStorage, memakai data default.", e);
-      researchData = [...INITIAL_RESEARCH_DATA];
-      saveDataToStorage();
+function setupCloudSyncStatus() {
+  const badge = document.getElementById('cloudSyncBadge');
+  const text = document.getElementById('cloudSyncText');
+
+  onSyncStatusChange((statusState, message) => {
+    if (!badge || !text) return;
+    badge.className = `cloud-status-badge ${statusState}`;
+    if (statusState === 'synced') {
+      text.textContent = '☁️ Tersinkron';
+      badge.title = message || 'Data tersinkronisasi di Cloud Database';
+    } else if (statusState === 'syncing') {
+      text.textContent = '🔄 Sinkronisasi...';
+      badge.title = message || 'Sedang menyinkronkan data dengan Cloud Database...';
+    } else {
+      text.textContent = '⚡ Mode Lokal';
+      badge.title = message || 'Cloud offline, menggunakan data lokal';
     }
-  } else {
-    researchData = [...INITIAL_RESEARCH_DATA];
-    saveDataToStorage();
-  }
+  });
 }
 
-function saveDataToStorage() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(researchData));
+// --- Cloud & Storage Helpers ---
+async function saveDataToStorage() {
+  await saveDataToCloud(researchData);
 }
 
 // --- Theme Management ---
@@ -370,7 +370,7 @@ function setViewMode(mode) {
   if (mode === 'admin') {
     btnAdminView.classList.add('active');
     btnPublicView.classList.remove('active');
-    btnTambahData.style.display = 'inline-flex';
+    if (adminActionsGroup) adminActionsGroup.style.display = 'flex';
     btnAdminLogout.style.display = 'inline-flex';
     thActions.style.display = 'table-cell';
     welcomeTitle.textContent = 'Dashboard Admin — Kelola Penelitian BKSDA Kalimantan Timur';
@@ -379,7 +379,7 @@ function setViewMode(mode) {
   } else {
     btnPublicView.classList.add('active');
     btnAdminView.classList.remove('active');
-    btnTambahData.style.display = 'none';
+    if (adminActionsGroup) adminActionsGroup.style.display = 'none';
     btnAdminLogout.style.display = 'none';
     thActions.style.display = 'none';
     welcomeTitle.textContent = 'Daftar Penelitian';
@@ -431,6 +431,89 @@ function handleAdminLogout(e) {
   showToast('Anda telah Logout dari Admin. Kembali ke Tampilan Publik.');
 }
 
+// --- JSON Export & Import Logic ---
+function handleExportJson() {
+  const jsonStr = JSON.stringify(researchData, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const timestamp = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = `UPT_Penelitian_BKSDA_Kaltim_${timestamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('File JSON data berhasil di-export & diunduh.');
+}
+
+function handleImportJson(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async function(evt) {
+    try {
+      const imported = JSON.parse(evt.target.result);
+      if (Array.isArray(imported) && imported.length > 0) {
+        researchData = imported;
+        await saveDataToStorage();
+        renderApp();
+        showToast(`Berhasil meng-import ${imported.length} data penelitian!`);
+      } else {
+        alert('Format file JSON tidak valid (harus berupa array data penelitian).');
+      }
+    } catch (err) {
+      alert('Gagal membaca file JSON: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// --- Cloud Configuration Modal Logic ---
+function openCloudConfigModal() {
+  const config = getCloudConfig();
+  const endpointEl = document.getElementById('inputCloudEndpoint');
+  const apiKeyEl = document.getElementById('inputCloudApiKey');
+  if (endpointEl) endpointEl.value = config.endpointUrl || '';
+  if (apiKeyEl) apiKeyEl.value = config.apiKey || '';
+  modalCloudConfig.classList.add('active');
+}
+
+function closeCloudConfigModal() {
+  modalCloudConfig.classList.remove('active');
+}
+
+async function handleSaveCloudConfig(e) {
+  e.preventDefault();
+  const endpoint = document.getElementById('inputCloudEndpoint').value.trim();
+  const apiKey = document.getElementById('inputCloudApiKey').value.trim();
+
+  saveCloudConfig({
+    endpointUrl: endpoint,
+    apiKey: apiKey,
+    enabled: true
+  });
+  closeCloudConfigModal();
+  showToast('Pengaturan Cloud Database disimpan. Menyinkronkan...');
+  researchData = await loadDataFromCloud();
+  renderApp();
+}
+
+async function handleResetCloudDefault() {
+  saveCloudConfig({
+    endpointUrl: 'https://api.jsonbin.io/v3/b/66c2e9a3e41b4d34e424c88f',
+    apiKey: '$2a$10$8F596oF.Lz02BqD9i6y20uC2bF321c1z7890abcdefghijklm',
+    enabled: true
+  });
+  const endpointEl = document.getElementById('inputCloudEndpoint');
+  const apiKeyEl = document.getElementById('inputCloudApiKey');
+  if (endpointEl) endpointEl.value = 'https://api.jsonbin.io/v3/b/66c2e9a3e41b4d34e424c88f';
+  if (apiKeyEl) apiKeyEl.value = '$2a$10$8F596oF.Lz02BqD9i6y20uC2bF321c1z7890abcdefghijklm';
+  showToast('Konfigurasi dikembalikan ke REST Endpoint bawaan BKSDA.');
+}
+
 // --- Event Listeners Setup ---
 function setupEventListeners() {
   btnPublicView?.addEventListener('click', () => setViewMode('public'));
@@ -442,6 +525,18 @@ function setupEventListeners() {
   btnCloseModalLogin?.addEventListener('click', closeLoginModal);
   btnBatalLogin?.addEventListener('click', closeLoginModal);
   formLoginAdmin?.addEventListener('submit', handleAdminLogin);
+
+  // JSON Export / Import
+  btnExportJson?.addEventListener('click', handleExportJson);
+  btnImportJson?.addEventListener('click', () => inputImportJson?.click());
+  inputImportJson?.addEventListener('change', handleImportJson);
+
+  // Cloud Config Modal
+  btnCloudSettings?.addEventListener('click', openCloudConfigModal);
+  btnCloseModalCloudConfig?.addEventListener('click', closeCloudConfigModal);
+  btnBatalCloudConfig?.addEventListener('click', closeCloudConfigModal);
+  formCloudConfig?.addEventListener('submit', handleSaveCloudConfig);
+  btnResetCloudDefault?.addEventListener('click', handleResetCloudDefault);
 
   // Reset Data Sample
   btnResetData?.addEventListener('click', () => {

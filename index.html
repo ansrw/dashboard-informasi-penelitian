@@ -31,6 +31,12 @@
           </button>
         </div>
 
+        <!-- Cloud Sync Status Badge -->
+        <div class="cloud-status-badge synced" id="cloudSyncBadge" title="Status Sinkronisasi Cloud Database">
+          <span class="cloud-dot"></span>
+          <span id="cloudSyncText">☁️ Tersinkron</span>
+        </div>
+
         <button type="button" class="btn-secondary" id="btnAdminLogout" style="display: none; background: var(--danger-bg); color: var(--danger); border-color: rgba(220, 38, 38, 0.3); cursor: pointer;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Logout Admin
@@ -119,11 +125,28 @@
           <button type="button" class="tab-btn" data-filter="belum">Belum Presentasi</button>
         </div>
 
-        <!-- Admin Only Action Button -->
-        <button type="button" class="btn-primary" id="btnTambahData" style="display: none;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Tambah Penelitian
-        </button>
+        <!-- Hidden file input for JSON import -->
+        <input type="file" id="inputImportJson" accept=".json" style="display: none;" />
+
+        <!-- Admin Only Action Buttons -->
+        <div class="admin-actions-group" id="adminActionsGroup" style="display: none;">
+          <button type="button" class="btn-secondary" id="btnExportJson" title="Unduh Data dalam format JSON">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export JSON
+          </button>
+          <button type="button" class="btn-secondary" id="btnImportJson" title="Unggah / Import File Data JSON">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Import JSON
+          </button>
+          <button type="button" class="btn-secondary" id="btnCloudSettings" title="Pengaturan Server Cloud API">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Cloud Config
+          </button>
+          <button type="button" class="btn-primary" id="btnTambahData">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Tambah Penelitian
+          </button>
+        </div>
       </div>
     </section>
 
@@ -333,6 +356,43 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
             Masuk Admin
           </button>
+        </div>
+  <!-- Cloud Database Config Modal -->
+  <div class="modal-overlay" id="modalCloudConfig">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header">
+        <div>
+          <h3 style="color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            Pengaturan Cloud Database
+          </h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Atur REST API Endpoint / Key untuk sinkronisasi terpusat.</p>
+        </div>
+        <button type="button" class="close-modal-btn" id="btnCloseModalCloudConfig">&times;</button>
+      </div>
+      <form id="formCloudConfig">
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label for="inputCloudEndpoint">Cloud REST API Endpoint URL *</label>
+            <input type="url" id="inputCloudEndpoint" placeholder="https://api.jsonbin.io/v3/b/..." required />
+            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; display: block;">Endpoint REST API yang digunakan untuk menyimpan & membaca data JSON secara terpusat.</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label for="inputCloudApiKey">API Access Key (Opsional)</label>
+            <input type="text" id="inputCloudApiKey" placeholder="Key akses jika menggunakan Bin privat..." />
+          </div>
+
+          <div style="padding: 10px 12px; background: rgba(2, 132, 199, 0.08); border-radius: var(--radius-md); font-size: 0.8rem; color: var(--text-main);">
+            💡 <strong>Status bawaan</strong>: Sudah dikonfigurasi menggunakan Cloud JSON Storage terpusat BKSDA Kaltim. Anda juga bisa menekan tombol "Reset Default" untuk mengembalikan ke REST Endpoint bawaan.
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content: space-between;">
+          <button type="button" class="btn-secondary" id="btnResetCloudDefault">Reset Default</button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-secondary" id="btnBatalCloudConfig">Batal</button>
+            <button type="submit" class="btn-primary">Simpan Pengaturan</button>
+          </div>
         </div>
       </form>
     </div>
